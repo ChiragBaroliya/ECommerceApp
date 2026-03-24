@@ -1,0 +1,42 @@
+@page
+@model EcommerceApp.Backend.Pages.Addresses.IndexModel
+@{
+    ViewData["Title"] = "Addresses";
+}
+
+<h1>Addresses</h1>
+<p>
+    <a asp-page="Create">Create New Address</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>User Name</th>
+            <th>Street</th>
+            <th>City</th>
+            <th>State</th>
+            <th>Zip</th>
+            <th>Country</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var address in Model.Addresses)
+    {
+        <tr>
+            <td>@address.Id</td>
+            <td>@address.UserName</td>
+            <td>@address.Street</td>
+            <td>@address.City</td>
+            <td>@address.State</td>
+            <td>@address.Zip</td>
+            <td>@address.Country</td>
+            <td>
+                <a asp-page="Edit" asp-route-id="@address.Id">Edit</a> |
+                <a asp-page="Delete" asp-route-id="@address.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
