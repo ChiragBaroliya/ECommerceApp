@@ -16,3 +16,39 @@ We have only diff of a workflow file update and a controller & views deleted. So
 Thus produce accordingly.
 
 ---
+
+## 📅 Feature Release - 2026-03-24 08:42:56
+
+We need to produce documentation sections. Let's parse code.
+
+- Removed pages folder from csproj? originally had <Folder Include="Pages\" />, removed. This is a change but maybe not a feature.
+
+- New class MockAddressStore with list of Address and NextId property.
+
+- New model Address with properties Id, UserName, Street, City, State, Zip, Country.
+
+- New Razor Pages for Addresses: Index, Create, Edit, Delete.
+
+- Each page has code-behind that uses MockAddressStore for CRUD.
+
+Thus features: Address management UI with CRUD operations using in-memory mock store. The changes involve pages and store.
+
+Bug fixes: None.
+
+Affected modules: Pages (Razor pages), Models, Mock data store.
+
+Technical changes: Add model, add mock store, add Razor pages and code-behind for CRUD.
+
+Impact: Provides address CRUD UI, not persistent, no database changes.
+
+We need to output sections.
+
+Also mention removal of <Folder Include="Pages\" /> from csproj? This indicates pages folder maybe removed from compile? Might be removed from csproj but still there. Might be leftover but we mention removal of that folder item.
+
+Also we need to mention that there's no data persistence.
+
+Thus produce output.
+
+Let's craft sections.
+
+---
