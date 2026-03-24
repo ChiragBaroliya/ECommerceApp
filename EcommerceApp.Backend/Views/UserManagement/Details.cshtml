@@ -1,0 +1,17 @@
+@model EcommerceApp.Backend.Models.User
+@{
+    ViewData["Title"] = "User Details";
+}
+<h2>User Details</h2>
+<dl class="row">
+    <dt class="col-sm-2">Username</dt>
+    <dd class="col-sm-10">@Model.Username</dd>
+    <dt class="col-sm-2">Full Name</dt>
+    <dd class="col-sm-10">@Model.FullName</dd>
+    <dt class="col-sm-2">Email</dt>
+    <dd class="col-sm-10">@Model.Email</dd>
+    <dt class="col-sm-2">Role</dt>
+    <dd class="col-sm-10">@Model.Role</dd>
+</dl>
+<a asp-action="Edit" asp-route-username="@Model.Username" class="btn btn-warning">Edit</a>
+<a asp-action="Index" class="btn btn-secondary">Back to List</a>

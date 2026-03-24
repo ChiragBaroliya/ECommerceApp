@@ -1,0 +1,33 @@
+@model IEnumerable<EcommerceApp.Backend.Models.User>
+@{
+    ViewData["Title"] = "User List";
+}
+<h2>User List</h2>
+<a class="btn btn-primary mb-2" asp-action="Create">Create New User</a>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var user in Model)
+    {
+        <tr>
+            <td>@user.Username</td>
+            <td>@user.FullName</td>
+            <td>@user.Email</td>
+            <td>@user.Role</td>
+            <td>
+                <a class="btn btn-info btn-sm" asp-action="Details" asp-route-username="@user.Username">Details</a>
+                <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-username="@user.Username">Edit</a>
+                <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-username="@user.Username">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

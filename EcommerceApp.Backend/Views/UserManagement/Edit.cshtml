@@ -1,0 +1,30 @@
+@model EcommerceApp.Backend.Models.User
+@{
+    ViewData["Title"] = "Edit User";
+}
+<h2>Edit User</h2>
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Username" />
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" type="password" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Role" class="form-label"></label>
+        <select asp-for="Role" class="form-select">
+            <option>Admin</option>
+            <option>Customer</option>
+            <option>Vendor</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>
