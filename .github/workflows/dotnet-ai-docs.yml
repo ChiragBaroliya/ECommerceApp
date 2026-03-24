@@ -51,31 +51,46 @@ jobs:
         AI_PROMPT: |
           You are a senior .NET architect and software engineer.
 
-          Generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based on a merged branch.
+          Your task is to generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff.
 
-          IMPORTANT RULES:
+          STRICT RULES:
+          - DO NOT hallucinate or assume features
+          - ONLY document what is clearly visible in the code diff
+          - If data is insufficient → explicitly mention "Insufficient data"
           - DO NOT show commit-wise information
-          - Combine all commits into FEATURES and BUG FIXES
-          - Group related changes together
-          - Focus on .NET backend architecture and APIs
-          - DO NOT list commits
-          - DO NOT hallucinate
-          - If files deleted → mention removal
+          - Group changes into FEATURES and BUG FIXES logically
+          - If nothing meaningful → return empty sections
+          - If files are deleted → mention removal
+
+          ANALYSIS INSTRUCTIONS:
+          - Identify Controllers, Services, Repositories, DTOs, Entities
+          - Detect API changes (new endpoints, modified endpoints)
+          - Detect business logic changes
+          - Detect DB/schema changes (migrations, models)
+          - Detect performance improvements or refactoring
 
           OUTPUT FORMAT:
 
           ## 🚀 Features Implemented
+          - Only include clearly identifiable features
+          - If none → "No new features identified from diff"
 
           ## 🐛 Bug Fixes
+          - Only include confirmed fixes
+          - If none → "No bug fixes identified"
 
           ## 📂 Affected Modules / Layers
-          (Controllers, Services, Repositories, DB, etc.)
+          - List only actual impacted layers
+          (e.g., Controllers, Services, Repositories, Database, DTOs)
 
           ## 🔧 Technical Changes (Detailed)
-          (Explain logic, patterns, performance improvements)
+          - Explain exact code-level changes
+          - No assumptions
+          - If unclear → "Insufficient data"
 
           ## ⚡ Impact
-          (Performance, scalability, maintainability)
+          - Only if logically derivable
+          - Otherwise → "Impact cannot be determined from available diff"
 
       run: |
         echo "🔍 Extracting PR data..."
