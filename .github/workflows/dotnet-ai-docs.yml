@@ -1,0 +1,159 @@
+name: .NET AI Documentation (Feature Wise)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    # ----------------------------------------
+    # Checkout
+    # ----------------------------------------
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # ----------------------------------------
+    # Setup .NET
+    # ----------------------------------------
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    # ----------------------------------------
+    # Restore & Build
+    # ----------------------------------------
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run Tests (Optional)
+      run: dotnet test --no-build --verbosity normal || true
+
+    # ----------------------------------------
+    # Install jq (for JSON parsing)
+    # ----------------------------------------
+    - name: Install jq
+      run: sudo apt-get update && sudo apt-get install -y jq
+
+    # ----------------------------------------
+    # Generate Feature-wise Documentation
+    # ----------------------------------------
+    - name: Generate AI Documentation (Feature Wise Only)
+      env:
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        AI_PROMPT: |
+          You are a senior .NET architect and software engineer.
+
+          Generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based on a merged branch.
+
+          IMPORTANT RULES:
+          - DO NOT show commit-wise information
+          - Combine all commits into FEATURES and BUG FIXES
+          - Group related changes together
+          - Focus on .NET backend architecture and APIs
+          - DO NOT list commits
+          - DO NOT hallucinate
+          - If files deleted → mention removal
+
+          OUTPUT FORMAT:
+
+          ## 🚀 Features Implemented
+
+          ## 🐛 Bug Fixes
+
+          ## 📂 Affected Modules / Layers
+          (Controllers, Services, Repositories, DB, etc.)
+
+          ## 🔧 Technical Changes (Detailed)
+          (Explain logic, patterns, performance improvements)
+
+          ## ⚡ Impact
+          (Performance, scalability, maintainability)
+
+      run: |
+        echo "🔍 Extracting PR data..."
+
+        PARENTS=$(git log -1 --pretty=%P)
+        PARENT1=$(echo $PARENTS | cut -d ' ' -f1)
+        PARENT2=$(echo $PARENTS | cut -d ' ' -f2)
+
+        if [ -n "$PARENT2" ]; then
+          echo "🔀 Merge commit detected"
+
+          DIFF=$(git diff $PARENT1 $PARENT2)
+          COMMITS=$(git log $PARENT1..$PARENT2 --pretty=format:"%s")
+        else
+          echo "📌 Normal commit"
+
+          DIFF=$(git show HEAD)
+          COMMITS=$(git log -1 --pretty=format:"%s")
+        fi
+
+        # Limit size (important for API)
+        DIFF=$(echo "$DIFF" | head -c 12000)
+
+        echo "🤖 Preparing AI request..."
+
+        PAYLOAD=$(jq -n \
+          --arg prompt "$AI_PROMPT" \
+          --arg commits "$COMMITS" \
+          --arg diff "$DIFF" \
+          '{
+            model: "openai/gpt-oss-20b",
+            input: ($prompt + "\n\nContext (Do NOT display):\n" + $commits + "\n\nCode Diff:\n" + $diff)
+          }')
+
+        echo "🚀 Calling Groq API..."
+
+        RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
+          -H "Authorization: Bearer $GROQ_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d "$PAYLOAD")
+
+        DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
+
+        if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
+          DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
+        fi
+
+        mkdir -p docs
+        touch docs/auto-generated.md
+
+        CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+
+        echo "📄 Updating documentation..."
+
+        {
+          echo ""
+          echo "## 📅 Feature Release - $CURRENT_TIME"
+          echo ""
+          echo "$DOC"
+          echo ""
+          echo "---"
+        } >> docs/auto-generated.md
+
+    # ----------------------------------------
+    # Commit & Push
+    # ----------------------------------------
+    - name: Commit documentation
+      run: |
+        git config user.name "github-actions"
+        git config user.email "actions@github.com"
+
+        git add docs/auto-generated.md
+
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+          exit 0
+        fi
+
+        git commit -m "Auto generate feature-wise documentation (.NET)"
+
+        git push
