@@ -1,0 +1,30 @@
+@model EcommerceApp.Backend.Models.User
+@{
+    ViewData["Title"] = "Register";
+}
+<div class="container mt-5">
+    <h2>Register</h2>
+    <form asp-action="Register" method="post">
+        <div class="mb-3">
+            <label asp-for="Username" class="form-label"></label>
+            <input asp-for="Username" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" type="password" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label asp-for="Role" class="form-label"></label>
+            <select asp-for="Role" class="form-select">
+                <option>Admin</option>
+                <option>Customer</option>
+                <option>Vendor</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Register</button>
+    </form>
+    @if (ViewBag.Message != null)
+    {
+        <div class="alert alert-info mt-3">@ViewBag.Message</div>
+    }
+</div>
