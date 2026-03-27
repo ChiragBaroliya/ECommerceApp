@@ -14,8 +14,10 @@ namespace EcommerceApp.Backend.Pages.Addresses
         {
         }
 
+        [ValidateAntiForgeryToken]
         public IActionResult OnPost()
         {
+        
             if (!ModelState.IsValid)
             {
                 return Page();

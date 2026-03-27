@@ -1,0 +1,33 @@
+@page
+@model EcommerceApp.Backend.Pages.Account.SettingsModel
+@{
+    ViewData["Title"] = "Account Settings";
+}
+
+<h2>Account Settings</h2>
+
+<form method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div>
+        <label>Name:</label>
+        <input asp-for="User.Name" />
+        <span asp-validation-for="User.Name" class="text-danger"></span>
+    </div>
+    <div>
+        <label>Email:</label>
+        <input asp-for="User.Email" />
+        <span asp-validation-for="User.Email" class="text-danger"></span>
+    </div>
+    <div>
+        <label>Phone:</label>
+        <input asp-for="User.Phone" />
+        <span asp-validation-for="User.Phone" class="text-danger"></span>
+    </div>
+    <button type="submit">Save</button>
+</form>
+
+@if (Model.Message != null)
+{
+    <div>@Model.Message</div>
+}

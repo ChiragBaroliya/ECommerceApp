@@ -6,6 +6,7 @@ namespace EcommerceApp.Backend.Controllers
 {
     public class UserManagementController : Controller
     {
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
         public IActionResult Index()
         {
             var users = MockUserStore.Users;
@@ -51,7 +52,9 @@ namespace EcommerceApp.Backend.Controllers
             existing.FullName = user.FullName;
             existing.Email = user.Email;
             existing.Role = user.Role;
-            existing.Password = user.Password;
+            // Always hash password on edit
+            var hasher = new Microsoft.AspNetCore.Identity.PasswordHasher<string>();
+            existing.Password = hasher.HashPassword(user.Username, user.Password);
             return RedirectToAction("Index");
         }
 

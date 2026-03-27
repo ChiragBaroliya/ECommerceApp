@@ -18,6 +18,13 @@ namespace EcommerceApp.Backend.Pages.Addresses
             {
                 return RedirectToPage("Index");
             }
+            // IDOR Mitigation: Only allow editing if the address belongs to the current user (mocked check)
+            var currentUser = User.Identity?.Name ?? "";
+            if (!string.IsNullOrEmpty(address.UserName) && !string.IsNullOrEmpty(currentUser) && address.UserName != currentUser)
+            {
+                // Unauthorized access attempt
+                return Forbid();
+            }
             Address = new Address
             {
                 Id = address.Id,
@@ -31,6 +38,7 @@ namespace EcommerceApp.Backend.Pages.Addresses
             return Page();
         }
 
+        [ValidateAntiForgeryToken]
         public IActionResult OnPost()
         {
             if (!ModelState.IsValid)

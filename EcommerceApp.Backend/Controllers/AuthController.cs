@@ -15,8 +15,10 @@ namespace EcommerceApp.Backend.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Login(User input)
         {
+        
             var user = MockUserStore.GetUser(input.Username, input.Password);
             if (user == null)
             {
@@ -34,8 +36,10 @@ namespace EcommerceApp.Backend.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Register(User user)
         {
+        
             if (MockUserStore.UserExists(user.Username))
             {
                 ViewBag.Message = "User already exists.";
