@@ -1,0 +1,28 @@
+@page
+@model EcommerceApp.Backend.Pages.Categories.IndexModel
+@{
+    ViewData["Title"] = "Categories";
+}
+<h1>Categories</h1>
+<a asp-page="Create" class="btn btn-primary mb-2">Create New Category</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var category in Model.Categories)
+    {
+        <tr>
+            <td>@Html.Encode(category.Name)</td>
+            <td>@Html.Encode(category.Description)</td>
+            <td>
+                <a asp-page="Edit" asp-route-id="@category.Id">Edit</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
