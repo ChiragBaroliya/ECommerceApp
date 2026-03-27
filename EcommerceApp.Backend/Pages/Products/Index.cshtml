@@ -1,0 +1,42 @@
+@page
+@model EcommerceApp.Backend.Pages.Products.IndexModel
+@{
+    ViewData["Title"] = "Products";
+}
+<h1>Products</h1>
+@if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
+{
+    <a asp-page="Create" class="btn btn-primary mb-2">Create New Product</a>
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var product in Model.Products)
+    {
+        <tr>
+            <td>@Html.Encode(product.Name)</td>
+            <td>@Html.Encode(product.Description)</td>
+            <td>@product.Price.ToString("C")</td>
+            <td>@product.Stock</td>
+            <td>
+                <a asp-page="Details" asp-route-id="@product.Id">Details</a>
+                @if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
+                {
+                    <span> | </span>
+                    <a asp-page="Edit" asp-route-id="@product.Id">Edit</a>
+                    <span> | </span>
+                    <a asp-page="Delete" asp-route-id="@product.Id">Delete</a>
+                }
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
