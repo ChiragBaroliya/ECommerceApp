@@ -64,7 +64,7 @@ jobs:
             PREVIOUS_COMMIT=$(git rev-parse $INPUT_COMMIT^)
 
           else
-            echo "📌 Using latest commit from feature branch"
+            echo "📌 Using latest commit from branch"
 
             CURRENT_COMMIT=$(git rev-parse HEAD)
             PREVIOUS_COMMIT=$(git rev-parse HEAD^)
@@ -76,7 +76,7 @@ jobs:
           DIFF=$(git diff $PREVIOUS_COMMIT $CURRENT_COMMIT)
           COMMITS=$(git log $PREVIOUS_COMMIT..$CURRENT_COMMIT --pretty=format:"%s")
 
-          # 🔥 Filter irrelevant files
+          # 🔥 Filter workflow files
           DIFF=$(echo "$DIFF" | grep -v ".github/workflows" | head -n 150)
 
           if [ -z "$DIFF" ]; then
@@ -156,7 +156,7 @@ jobs:
           echo "---" >> $FILE
 
       # ----------------------------------------
-      # Commit & Push
+      # Commit & Push (FIXED)
       # ----------------------------------------
       - name: Commit documentation
         run: |
@@ -171,4 +171,15 @@ jobs:
           fi
 
           git commit -m "chore: auto generate feature-wise documentation (.NET AI)"
-          git push
+
+          # 🔥 HANDLE DETACHED HEAD
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+
+          if [ "$BRANCH_NAME" = "HEAD" ]; then
+            echo "⚠️ Detached HEAD detected, using workflow branch"
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          fi
+
+          echo "🚀 Pushing to branch: $BRANCH_NAME"
+
+          git push origin HEAD:$BRANCH_NAME
