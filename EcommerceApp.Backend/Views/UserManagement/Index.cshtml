@@ -4,30 +4,38 @@
 }
 <h2>User List</h2>
 <a class="btn btn-primary mb-2" asp-action="Create">Create New User</a>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Username</th>
-            <th>Full Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var user in Model)
-    {
-        <tr>
-            <td>@user.Username</td>
-            <td>@user.FullName</td>
-            <td>@user.Email</td>
-            <td>@user.Role</td>
-            <td>
-                <a class="btn btn-info btn-sm" asp-action="Details" asp-route-username="@user.Username">Details</a>
-                <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-username="@user.Username">Edit</a>
-                <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-username="@user.Username">Delete</a>
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+<div class="table-responsive shadow-sm rounded">
+    <table class="table table-striped table-hover table-bordered align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Username</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Username</td>
+                <td>@user.FullName</td>
+                <td>@user.Email</td>
+                <td>
+                    <span class="badge @(user.Role == "Admin" ? "bg-danger" : "bg-primary")">
+                        @user.Role
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a class="btn btn-outline-info" asp-action="Details" asp-route-username="@user.Username">Details</a>
+                        <a class="btn btn-outline-warning" asp-action="Edit" asp-route-username="@user.Username">Edit</a>
+                        <a class="btn btn-outline-danger" asp-action="Delete" asp-route-username="@user.Username">Delete</a>
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

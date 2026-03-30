@@ -10,31 +10,32 @@
 <form method="post">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <table class="table w-auto">
+    <table class="table table-borderless w-auto">
         <tr>
-            <th>Name</th>
+            <th class="align-middle">Name</th>
             <td>
                 <input asp-for="User.Name" class="form-control" />
                 <span asp-validation-for="User.Name" class="text-danger"></span>
             </td>
         </tr>
         <tr>
-            <th>Email</th>
+            <th class="align-middle">Email</th>
             <td>
                 <input asp-for="User.Email" class="form-control" />
                 <span asp-validation-for="User.Email" class="text-danger"></span>
             </td>
         </tr>
         <tr>
-            <th>Phone</th>
+            <th class="align-middle">Phone</th>
             <td>
                 <input asp-for="User.Phone" class="form-control" />
                 <span asp-validation-for="User.Phone" class="text-danger"></span>
             </td>
         </tr>
         <tr>
-            <td colspan="2">
-                <button type="submit" class="btn btn-success">Save</button>
+            <td></td>
+            <td>
+                <button type="submit" class="btn btn-primary shadow-sm px-4">Save Changes</button>
             </td>
         </tr>
     </table>
