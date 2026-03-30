@@ -3,42 +3,49 @@
 @{
     ViewData["Title"] = "Products";
 }
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 <h1>Products</h1>
 @if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
 {
     <a asp-page="Create" class="btn btn-primary mb-2">Create New Product</a>
 }
-<div class="table-responsive">
-<table class="table table-striped table-hover align-middle">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-    @foreach (var product in Model.Products)
-    {
-        <tr>
-            <td>@Html.Encode(product.Name)</td>
-            <td>@Html.Encode(product.Description)</td>
-            <td>@product.Price.ToString("C")</td>
-            <td>@product.Stock</td>
-            <td>
-                <a asp-page="Details" asp-route-id="@product.Id">Details</a>
-                @if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
-                {
-                    <span> | </span>
-                    <a asp-page="Edit" asp-route-id="@product.Id">Edit</a>
-                    <span> | </span>
-                    <a asp-page="Delete" asp-route-id="@product.Id">Delete</a>
-                }
-            </td>
-        </tr>
-    }
-    </tbody>
-</table>
+<div class="table-responsive shadow-sm rounded">
+    <table class="table table-striped table-hover table-bordered align-middle mb-0">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var product in Model.Products)
+        {
+            <tr>
+                <td>@Html.Encode(product.Name)</td>
+                <td>@Html.Encode(product.Description)</td>
+                <td class="fw-bold text-success">@product.Price.ToString("C")</td>
+                <td>
+                    <span class="badge @(product.Stock > 10 ? "bg-success" : "bg-warning")">
+                        @product.Stock
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a asp-page="Details" asp-route-id="@product.Id" class="btn btn-outline-info">Details</a>
+                        @if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
+                        {
+                            <a asp-page="Edit" asp-route-id="@product.Id" class="btn btn-outline-primary">Edit</a>
+                            <a asp-page="Delete" asp-route-id="@product.Id" class="btn btn-outline-danger">Delete</a>
+                        }
+                    </div>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
 </div>
+
+<script src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
