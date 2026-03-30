@@ -77,15 +77,14 @@ jobs:
 
           echo "🤖 Preparing AI prompt..."
 
-          PROMPT=$(cat << 'EOF'
-You are a senior .NET architect and software engineer.
+          PROMPT="You are a senior .NET architect and software engineer.
 
 Generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff.
 
 STRICT RULES:
 - Do NOT hallucinate
 - Only use visible diff data
-- If unclear → say "Insufficient data"
+- If unclear → say 'Insufficient data'
 - No commit-wise output
 
 OUTPUT FORMAT:
@@ -94,13 +93,17 @@ OUTPUT FORMAT:
 ## 🐛 Bug Fixes
 ## 📂 Affected Modules / Layers
 ## 🔧 Technical Changes (Detailed)
-## ⚡ Impact
-EOF
-)
+## ⚡ Impact"
 
           PAYLOAD=$(jq -n \
             --arg model "llama-3.3-70b-versatile" \
-            --arg input "$PROMPT\n\nContext:\n$COMMITS\n\nCode Diff:\n$DIFF" \
+            --arg input "$PROMPT
+
+Context:
+$COMMITS
+
+Code Diff:
+$DIFF" \
             '{ model: $model, input: $input }')
 
           echo "🚀 Calling Groq API..."
@@ -156,5 +159,4 @@ EOF
           fi
 
           git commit -m "chore: auto generate feature-wise documentation (.NET AI)"
-
           git push
