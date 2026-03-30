@@ -6,25 +6,38 @@
 
 <h2>Account Settings</h2>
 
+
 <form method="post">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-    <div>
-        <label>Name:</label>
-        <input asp-for="User.Name" />
-        <span asp-validation-for="User.Name" class="text-danger"></span>
-    </div>
-    <div>
-        <label>Email:</label>
-        <input asp-for="User.Email" />
-        <span asp-validation-for="User.Email" class="text-danger"></span>
-    </div>
-    <div>
-        <label>Phone:</label>
-        <input asp-for="User.Phone" />
-        <span asp-validation-for="User.Phone" class="text-danger"></span>
-    </div>
-    <button type="submit">Save</button>
+    <table class="table w-auto">
+        <tr>
+            <th>Name</th>
+            <td>
+                <input asp-for="User.Name" class="form-control" />
+                <span asp-validation-for="User.Name" class="text-danger"></span>
+            </td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>
+                <input asp-for="User.Email" class="form-control" />
+                <span asp-validation-for="User.Email" class="text-danger"></span>
+            </td>
+        </tr>
+        <tr>
+            <th>Phone</th>
+            <td>
+                <input asp-for="User.Phone" class="form-control" />
+                <span asp-validation-for="User.Phone" class="text-danger"></span>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <button type="submit" class="btn btn-success">Save</button>
+            </td>
+        </tr>
+    </table>
 </form>
 
 @if (Model.Message != null)
