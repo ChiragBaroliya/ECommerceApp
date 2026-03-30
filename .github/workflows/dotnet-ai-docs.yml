@@ -37,7 +37,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal || true
 
     # ----------------------------------------
-    # Install jq (for JSON parsing)
+    # Install jq
     # ----------------------------------------
     - name: Install jq
       run: sudo apt-get update && sudo apt-get install -y jq
@@ -45,55 +45,11 @@ jobs:
     # ----------------------------------------
     # Generate Feature-wise Documentation
     # ----------------------------------------
-    - name: Generate AI Documentation (Feature Wise Only)
+    - name: Generate AI Documentation
       env:
         GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        AI_PROMPT: |
-          You are a senior .NET architect and software engineer.
-
-          Your task is to generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff.
-
-          STRICT RULES:
-          - DO NOT hallucinate or assume features
-          - ONLY document what is clearly visible in the code diff
-          - If data is insufficient → explicitly mention "Insufficient data"
-          - DO NOT show commit-wise information
-          - Group changes into FEATURES and BUG FIXES logically
-          - If nothing meaningful → return empty sections
-          - If files are deleted → mention removal
-
-          ANALYSIS INSTRUCTIONS:
-          - Identify Controllers, Services, Repositories, DTOs, Entities
-          - Detect API changes (new endpoints, modified endpoints)
-          - Detect business logic changes
-          - Detect DB/schema changes (migrations, models)
-          - Detect performance improvements or refactoring
-
-          OUTPUT FORMAT:
-
-          ## 🚀 Features Implemented
-          - Only include clearly identifiable features
-          - If none → "No new features identified from diff"
-
-          ## 🐛 Bug Fixes
-          - Only include confirmed fixes
-          - If none → "No bug fixes identified"
-
-          ## 📂 Affected Modules / Layers
-          - List only actual impacted layers
-          (e.g., Controllers, Services, Repositories, Database, DTOs)
-
-          ## 🔧 Technical Changes (Detailed)
-          - Explain exact code-level changes
-          - No assumptions
-          - If unclear → "Insufficient data"
-
-          ## ⚡ Impact
-          - Only if logically derivable
-          - Otherwise → "Impact cannot be determined from available diff"
-
       run: |
-        echo "🔍 Extracting PR data..."
+        echo "🔍 Extracting Git diff..."
 
         PARENTS=$(git log -1 --pretty=%P)
         PARENT1=$(echo $PARENTS | cut -d ' ' -f1)
@@ -101,28 +57,75 @@ jobs:
 
         if [ -n "$PARENT2" ]; then
           echo "🔀 Merge commit detected"
-
           DIFF=$(git diff $PARENT1 $PARENT2)
           COMMITS=$(git log $PARENT1..$PARENT2 --pretty=format:"%s")
         else
           echo "📌 Normal commit"
-
           DIFF=$(git show HEAD)
           COMMITS=$(git log -1 --pretty=format:"%s")
         fi
 
-        # Limit size (important for API)
-        DIFF=$(echo "$DIFF" | head -c 12000)
+        # Limit diff safely (by lines, not characters)
+        DIFF=$(echo "$DIFF" | head -n 300)
+
+        if [ -z "$DIFF" ]; then
+          echo "⚠️ No diff found"
+          DIFF="No code changes detected"
+        fi
 
         echo "🤖 Preparing AI request..."
 
+        PROMPT=$(cat << 'EOF'
+You are a senior .NET architect and software engineer.
+
+Your task is to generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff.
+
+STRICT RULES:
+- DO NOT hallucinate or assume features
+- ONLY document what is clearly visible in the code diff
+- If data is insufficient → explicitly mention "Insufficient data"
+- DO NOT show commit-wise information
+- Group changes into FEATURES and BUG FIXES logically
+- If nothing meaningful → return empty sections
+- If files are deleted → mention removal
+
+ANALYSIS INSTRUCTIONS:
+- Identify Controllers, Services, Repositories, DTOs, Entities
+- Detect API changes (new endpoints, modified endpoints)
+- Detect business logic changes
+- Detect DB/schema changes (migrations, models)
+- Detect performance improvements or refactoring
+
+OUTPUT FORMAT:
+
+## 🚀 Features Implemented
+- Only include clearly identifiable features
+- If none → "No new features identified from diff"
+
+## 🐛 Bug Fixes
+- Only include confirmed fixes
+- If none → "No bug fixes identified"
+
+## 📂 Affected Modules / Layers
+- List only actual impacted layers
+
+## 🔧 Technical Changes (Detailed)
+- Explain exact code-level changes
+- No assumptions
+- If unclear → "Insufficient data"
+
+## ⚡ Impact
+- Only if logically derivable
+- Otherwise → "Impact cannot be determined from available diff"
+EOF
+)
+
         PAYLOAD=$(jq -n \
-          --arg prompt "$AI_PROMPT" \
-          --arg commits "$COMMITS" \
-          --arg diff "$DIFF" \
+          --arg model "llama-3.3-70b-versatile" \
+          --arg input "$PROMPT\n\nContext (Do NOT display):\n$COMMITS\n\nCode Diff:\n$DIFF" \
           '{
-            model: "openai/gpt-oss-20b",
-            input: ($prompt + "\n\nContext (Do NOT display):\n" + $commits + "\n\nCode Diff:\n" + $diff)
+            model: $model,
+            input: $input
           }')
 
         echo "🚀 Calling Groq API..."
@@ -132,9 +135,19 @@ jobs:
           -H "Content-Type: application/json" \
           -d "$PAYLOAD")
 
-        DOC=$(echo $RESPONSE | jq -r '.output[0].content[0].text // .output_text // empty')
+        echo "📦 Raw API Response:"
+        echo "$RESPONSE"
+
+        echo "🧠 Extracting AI output..."
+
+        DOC=$(echo "$RESPONSE" | jq -r '
+          if .output_text then .output_text
+          elif .output and .output[0].content and .output[0].content[0].text then .output[0].content[0].text
+          else empty end
+        ')
 
         if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
+          echo "⚠️ AI output extraction failed"
           DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
         fi
 
@@ -143,7 +156,7 @@ jobs:
 
         CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
-        echo "📄 Updating documentation..."
+        echo "📄 Writing documentation..."
 
         {
           echo ""
@@ -169,6 +182,6 @@ jobs:
           exit 0
         fi
 
-        git commit -m "Auto generate feature-wise documentation (.NET)"
+        git commit -m "chore: auto generate feature-wise documentation (.NET AI)"
 
         git push
