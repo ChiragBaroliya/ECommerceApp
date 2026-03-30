@@ -8,180 +8,153 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # ----------------------------------------
-    # Checkout
-    # ----------------------------------------
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      # ----------------------------------------
+      # Checkout Repository
+      # ----------------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    # ----------------------------------------
-    # Setup .NET
-    # ----------------------------------------
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
+      # ----------------------------------------
+      # Setup .NET
+      # ----------------------------------------
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
 
-    # ----------------------------------------
-    # Restore & Build
-    # ----------------------------------------
-    - name: Restore dependencies
-      run: dotnet restore
+      # ----------------------------------------
+      # Restore, Build, Test
+      # ----------------------------------------
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build project
-      run: dotnet build --configuration Release --no-restore
+      - name: Build project
+        run: dotnet build --configuration Release --no-restore
 
-    - name: Run Tests (Optional)
-      run: dotnet test --no-build --verbosity normal || true
+      - name: Run tests (optional)
+        run: dotnet test --no-build --verbosity normal || true
 
-    # ----------------------------------------
-    # Install jq
-    # ----------------------------------------
-    - name: Install jq
-      run: sudo apt-get update && sudo apt-get install -y jq
+      # ----------------------------------------
+      # Install jq
+      # ----------------------------------------
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq
 
-    # ----------------------------------------
-    # Generate Feature-wise Documentation
-    # ----------------------------------------
-    - name: Generate AI Documentation
-      env:
-        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-      run: |
-        echo "🔍 Extracting Git diff..."
+      # ----------------------------------------
+      # Generate AI Documentation
+      # ----------------------------------------
+      - name: Generate AI Documentation
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          echo "🔍 Extracting Git diff..."
 
-        PARENTS=$(git log -1 --pretty=%P)
-        PARENT1=$(echo $PARENTS | cut -d ' ' -f1)
-        PARENT2=$(echo $PARENTS | cut -d ' ' -f2)
+          PARENTS=$(git log -1 --pretty=%P)
+          PARENT1=$(echo $PARENTS | cut -d ' ' -f1)
+          PARENT2=$(echo $PARENTS | cut -d ' ' -f2)
 
-        if [ -n "$PARENT2" ]; then
-          echo "🔀 Merge commit detected"
-          DIFF=$(git diff $PARENT1 $PARENT2)
-          COMMITS=$(git log $PARENT1..$PARENT2 --pretty=format:"%s")
-        else
-          echo "📌 Normal commit"
-          DIFF=$(git show HEAD)
-          COMMITS=$(git log -1 --pretty=format:"%s")
-        fi
+          if [ -n "$PARENT2" ]; then
+            echo "🔀 Merge commit detected"
+            DIFF=$(git diff $PARENT1 $PARENT2)
+            COMMITS=$(git log $PARENT1..$PARENT2 --pretty=format:"%s")
+          else
+            echo "📌 Normal commit"
+            DIFF=$(git show HEAD)
+            COMMITS=$(git log -1 --pretty=format:"%s")
+          fi
 
-        # Limit diff safely (by lines, not characters)
-        DIFF=$(echo "$DIFF" | head -n 300)
+          # Limit diff safely
+          DIFF=$(echo "$DIFF" | head -n 300)
 
-        if [ -z "$DIFF" ]; then
-          echo "⚠️ No diff found"
-          DIFF="No code changes detected"
-        fi
+          if [ -z "$DIFF" ]; then
+            echo "⚠️ No diff found"
+            DIFF="No code changes detected"
+          fi
 
-        echo "🤖 Preparing AI request..."
+          echo "🤖 Preparing AI prompt..."
 
-        PROMPT=$(cat << 'EOF'
+          PROMPT=$(cat << 'EOF'
 You are a senior .NET architect and software engineer.
 
-Your task is to generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff.
+Generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff.
 
 STRICT RULES:
-- DO NOT hallucinate or assume features
-- ONLY document what is clearly visible in the code diff
-- If data is insufficient → explicitly mention "Insufficient data"
-- DO NOT show commit-wise information
-- Group changes into FEATURES and BUG FIXES logically
-- If nothing meaningful → return empty sections
-- If files are deleted → mention removal
-
-ANALYSIS INSTRUCTIONS:
-- Identify Controllers, Services, Repositories, DTOs, Entities
-- Detect API changes (new endpoints, modified endpoints)
-- Detect business logic changes
-- Detect DB/schema changes (migrations, models)
-- Detect performance improvements or refactoring
+- Do NOT hallucinate
+- Only use visible diff data
+- If unclear → say "Insufficient data"
+- No commit-wise output
 
 OUTPUT FORMAT:
 
 ## 🚀 Features Implemented
-- Only include clearly identifiable features
-- If none → "No new features identified from diff"
-
 ## 🐛 Bug Fixes
-- Only include confirmed fixes
-- If none → "No bug fixes identified"
-
 ## 📂 Affected Modules / Layers
-- List only actual impacted layers
-
 ## 🔧 Technical Changes (Detailed)
-- Explain exact code-level changes
-- No assumptions
-- If unclear → "Insufficient data"
-
 ## ⚡ Impact
-- Only if logically derivable
-- Otherwise → "Impact cannot be determined from available diff"
 EOF
 )
 
-        PAYLOAD=$(jq -n \
-          --arg model "llama-3.3-70b-versatile" \
-          --arg input "$PROMPT\n\nContext (Do NOT display):\n$COMMITS\n\nCode Diff:\n$DIFF" \
-          '{
-            model: $model,
-            input: $input
-          }')
+          PAYLOAD=$(jq -n \
+            --arg model "llama-3.3-70b-versatile" \
+            --arg input "$PROMPT\n\nContext:\n$COMMITS\n\nCode Diff:\n$DIFF" \
+            '{ model: $model, input: $input }')
 
-        echo "🚀 Calling Groq API..."
+          echo "🚀 Calling Groq API..."
 
-        RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
-          -H "Authorization: Bearer $GROQ_API_KEY" \
-          -H "Content-Type: application/json" \
-          -d "$PAYLOAD")
+          RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
 
-        echo "📦 Raw API Response:"
-        echo "$RESPONSE"
+          echo "📦 Raw API Response:"
+          echo "$RESPONSE"
 
-        echo "🧠 Extracting AI output..."
+          echo "🧠 Extracting AI output..."
 
-        DOC=$(echo "$RESPONSE" | jq -r '
-          if .output_text then .output_text
-          elif .output and .output[0].content and .output[0].content[0].text then .output[0].content[0].text
-          else empty end
-        ')
+          DOC=$(echo "$RESPONSE" | jq -r '
+            if .output_text then .output_text
+            elif .output and .output[0].content and .output[0].content[0].text then .output[0].content[0].text
+            else empty end
+          ')
 
-        if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
-          echo "⚠️ AI output extraction failed"
-          DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
-        fi
+          if [ -z "$DOC" ] || [ "$DOC" == "null" ]; then
+            echo "⚠️ AI output extraction failed"
+            DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
+          fi
 
-        mkdir -p docs
-        touch docs/auto-generated.md
+          echo "📄 Writing documentation..."
 
-        CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+          mkdir -p docs
+          FILE="docs/auto-generated.md"
 
-        echo "📄 Writing documentation..."
+          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
-        {
-          echo ""
-          echo "## 📅 Feature Release - $CURRENT_TIME"
-          echo ""
-          echo "$DOC"
-          echo ""
-          echo "---"
-        } >> docs/auto-generated.md
+          echo "" >> $FILE
+          echo "## 📅 Feature Release - $CURRENT_TIME" >> $FILE
+          echo "" >> $FILE
+          echo "$DOC" >> $FILE
+          echo "" >> $FILE
+          echo "---" >> $FILE
 
-    # ----------------------------------------
-    # Commit & Push
-    # ----------------------------------------
-    - name: Commit documentation
-      run: |
-        git config user.name "github-actions"
-        git config user.email "actions@github.com"
+      # ----------------------------------------
+      # Commit & Push
+      # ----------------------------------------
+      - name: Commit documentation
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
 
-        git add docs/auto-generated.md
+          git add docs/auto-generated.md
 
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-          exit 0
-        fi
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
 
-        git commit -m "chore: auto generate feature-wise documentation (.NET AI)"
+          git commit -m "chore: auto generate feature-wise documentation (.NET AI)"
 
-        git push
+          git push
