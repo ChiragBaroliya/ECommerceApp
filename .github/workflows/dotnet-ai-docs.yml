@@ -67,25 +67,27 @@ jobs:
             COMMITS=$(git log -1 --pretty=format:"%s")
           fi
 
-          # Reduce size (important for LLM quality)
-          DIFF=$(echo "$DIFF" | head -n 150)
+          # 🔥 Filter irrelevant files (VERY IMPORTANT)
+          DIFF=$(echo "$DIFF" | grep -v ".github/workflows" | head -n 150)
 
           if [ -z "$DIFF" ]; then
-            DIFF="No code changes detected"
+            DIFF="No application code changes"
           fi
 
           echo "🤖 Preparing prompt..."
 
           PROMPT=$(printf "%s\n" \
-            "You are a senior .NET architect and software engineer." \
+            "You are a senior .NET architect." \
             "" \
-            "Your task is to generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff." \
+            "Analyze ONLY the provided code diff." \
             "" \
             "STRICT RULES:" \
-            "- DO NOT hallucinate" \
-            "- ONLY document visible changes" \
+            "- If only CI/CD or workflow files changed → say 'No application-level changes detected'" \
+            "- If no meaningful code → say 'No new features identified from diff'" \
+            "- DO NOT generate generic explanations" \
+            "- DO NOT explain AI concepts" \
+            "- DO NOT guess anything" \
             "- If unclear → say 'Insufficient data'" \
-            "- DO NOT show commit-wise info" \
             "" \
             "OUTPUT FORMAT:" \
             "## 🚀 Features Implemented" \
@@ -97,14 +99,22 @@ jobs:
 
           INPUT=$(printf "%s\n\nContext:\n%s\n\nCode Diff:\n%s" "$PROMPT" "$COMMITS" "$DIFF")
 
+          echo "📦 Payload preview:"
+          echo "$INPUT"
+
           PAYLOAD=$(jq -n \
-            --arg model "openai/gpt-oss-20b" \
-            --arg input "$INPUT" \
-            '{ model: $model, input: $input }')
+            --arg model "llama-3.3-70b-versatile" \
+            --arg content "$INPUT" \
+            '{
+              model: $model,
+              messages: [
+                { role: "user", content: $content }
+              ]
+            }')
 
           echo "🚀 Calling Groq API..."
 
-          RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
+          RESPONSE=$(curl -s https://api.groq.com/openai/v1/chat/completions \
             -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
@@ -119,14 +129,16 @@ jobs:
               "ERROR: " + (.error.message // "Unknown error")
             elif .choices and .choices[0].message.content then
               .choices[0].message.content
-            elif .output_text then
-              .output_text
-            elif (.output | length) > 0 then
-              .output[0].content[0].text // empty
             else
               empty
             end
           ')
+
+          # 🔥 Safety: prevent garbage AI output
+          if [[ "$DOC" == *"language models"* ]]; then
+            echo "⚠️ Irrelevant AI output detected"
+            DOC="## ⚠️ Invalid AI Response\nModel returned unrelated content."
+          fi
 
           if [ -z "$DOC" ] || [ "$DOC" = "null" ]; then
             echo "⚠️ AI output extraction failed"
