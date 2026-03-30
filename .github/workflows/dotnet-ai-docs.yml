@@ -98,7 +98,7 @@ jobs:
           INPUT=$(printf "%s\n\nContext:\n%s\n\nCode Diff:\n%s" "$PROMPT" "$COMMITS" "$DIFF")
 
           PAYLOAD=$(jq -n \
-            --arg model "llama-3.3-70b-versatile" \
+            --arg model "openai/gpt-oss-20b" \
             --arg input "$INPUT" \
             '{ model: $model, input: $input }')
 
