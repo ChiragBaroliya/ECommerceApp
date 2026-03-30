@@ -3,6 +3,9 @@ name: .NET AI Documentation (Feature Wise)
 on:
   workflow_dispatch:
 
+env:
+  COMMIT_ID: ${{ vars.COMMIT_ID }}   # or secrets.COMMIT_ID
+
 jobs:
   build-and-docs:
     runs-on: ubuntu-latest
@@ -25,16 +28,13 @@ jobs:
           dotnet-version: 8.0.x
 
       # ----------------------------------------
-      # Restore, Build, Test
+      # Restore & Build
       # ----------------------------------------
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build project
         run: dotnet build --configuration Release --no-restore
-
-      - name: Run tests (optional)
-        run: dotnet test --no-build --verbosity normal || true
 
       # ----------------------------------------
       # Install jq
@@ -51,23 +51,32 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          echo "🔍 Extracting Git diff..."
+          echo "🔍 Determining commit..."
 
-          PARENTS=$(git log -1 --pretty=%P)
-          P1=$(echo $PARENTS | cut -d ' ' -f1)
-          P2=$(echo $PARENTS | cut -d ' ' -f2)
+          PLACEHOLDER="your_commit_sha"
+          INPUT_COMMIT="$COMMIT_ID"
 
-          if [ -n "$P2" ]; then
-            echo "🔀 Merge commit detected"
-            DIFF=$(git diff $P1 $P2)
-            COMMITS=$(git log $P1..$P2 --pretty=format:"%s")
+          if [ -n "$INPUT_COMMIT" ] && [ "$INPUT_COMMIT" != "$PLACEHOLDER" ]; then
+            echo "📌 Using commit from ENV: $INPUT_COMMIT"
+            git checkout $INPUT_COMMIT
+
+            CURRENT_COMMIT=$INPUT_COMMIT
+            PREVIOUS_COMMIT=$(git rev-parse $INPUT_COMMIT^)
+
           else
-            echo "📌 Normal commit"
-            DIFF=$(git show HEAD)
-            COMMITS=$(git log -1 --pretty=format:"%s")
+            echo "📌 Using latest commit from feature branch"
+
+            CURRENT_COMMIT=$(git rev-parse HEAD)
+            PREVIOUS_COMMIT=$(git rev-parse HEAD^)
           fi
 
-          # 🔥 Filter irrelevant files (VERY IMPORTANT)
+          echo "➡️ Previous: $PREVIOUS_COMMIT"
+          echo "➡️ Current : $CURRENT_COMMIT"
+
+          DIFF=$(git diff $PREVIOUS_COMMIT $CURRENT_COMMIT)
+          COMMITS=$(git log $PREVIOUS_COMMIT..$CURRENT_COMMIT --pretty=format:"%s")
+
+          # 🔥 Filter irrelevant files
           DIFF=$(echo "$DIFF" | grep -v ".github/workflows" | head -n 150)
 
           if [ -z "$DIFF" ]; then
@@ -85,7 +94,6 @@ jobs:
             "- If only CI/CD or workflow files changed → say 'No application-level changes detected'" \
             "- If no meaningful code → say 'No new features identified from diff'" \
             "- DO NOT generate generic explanations" \
-            "- DO NOT explain AI concepts" \
             "- DO NOT guess anything" \
             "- If unclear → say 'Insufficient data'" \
             "" \
@@ -97,10 +105,7 @@ jobs:
             "## ⚡ Impact"
           )
 
-          INPUT=$(printf "%s\n\nContext:\n%s\n\nCode Diff:\n%s" "$PROMPT" "$COMMITS" "$DIFF")
-
-          echo "📦 Payload preview:"
-          echo "$INPUT"
+          INPUT=$(printf "%s\n\nCommits:\n%s\n\nCode Diff:\n%s" "$PROMPT" "$COMMITS" "$DIFF")
 
           PAYLOAD=$(jq -n \
             --arg model "llama-3.3-70b-versatile" \
@@ -122,8 +127,6 @@ jobs:
           echo "📦 Raw API Response:"
           echo "$RESPONSE"
 
-          echo "🧠 Extracting AI output..."
-
           DOC=$(echo "$RESPONSE" | jq -r '
             if .error then
               "ERROR: " + (.error.message // "Unknown error")
@@ -134,14 +137,7 @@ jobs:
             end
           ')
 
-          # 🔥 Safety: prevent garbage AI output
-          if [[ "$DOC" == *"language models"* ]]; then
-            echo "⚠️ Irrelevant AI output detected"
-            DOC="## ⚠️ Invalid AI Response\nModel returned unrelated content."
-          fi
-
           if [ -z "$DOC" ] || [ "$DOC" = "null" ]; then
-            echo "⚠️ AI output extraction failed"
             DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
           fi
 
