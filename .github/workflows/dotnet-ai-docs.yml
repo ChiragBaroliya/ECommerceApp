@@ -8,16 +8,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ----------------------------------------
+      # Checkout Repository
+      # ----------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      # ----------------------------------------
+      # Setup .NET
+      # ----------------------------------------
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
 
+      # ----------------------------------------
+      # Restore, Build, Test
+      # ----------------------------------------
       - name: Restore dependencies
         run: dotnet restore
 
@@ -27,54 +36,63 @@ jobs:
       - name: Run tests (optional)
         run: dotnet test --no-build --verbosity normal || true
 
+      # ----------------------------------------
+      # Install jq
+      # ----------------------------------------
       - name: Install jq
         run: |
           sudo apt-get update
           sudo apt-get install -y jq
 
+      # ----------------------------------------
+      # Generate AI Documentation
+      # ----------------------------------------
       - name: Generate AI Documentation
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
-          echo "Extracting Git diff..."
+          echo "🔍 Extracting Git diff..."
 
           PARENTS=$(git log -1 --pretty=%P)
           P1=$(echo $PARENTS | cut -d ' ' -f1)
           P2=$(echo $PARENTS | cut -d ' ' -f2)
 
           if [ -n "$P2" ]; then
+            echo "🔀 Merge commit detected"
             DIFF=$(git diff $P1 $P2)
             COMMITS=$(git log $P1..$P2 --pretty=format:"%s")
           else
+            echo "📌 Normal commit"
             DIFF=$(git show HEAD)
             COMMITS=$(git log -1 --pretty=format:"%s")
           fi
 
-          DIFF=$(echo "$DIFF" | head -n 300)
+          # Reduce size (important for LLM quality)
+          DIFF=$(echo "$DIFF" | head -n 150)
 
           if [ -z "$DIFF" ]; then
             DIFF="No code changes detected"
           fi
 
-          echo "Preparing prompt..."
+          echo "🤖 Preparing prompt..."
 
           PROMPT=$(printf "%s\n" \
             "You are a senior .NET architect and software engineer." \
             "" \
-            "Generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff." \
+            "Your task is to generate FINAL FEATURE-WISE TECHNICAL DOCUMENTATION based ONLY on the provided code diff." \
             "" \
             "STRICT RULES:" \
-            "- Do NOT hallucinate" \
-            "- Only use visible diff data" \
-            "- If unclear say Insufficient data" \
-            "- No commit-wise output" \
+            "- DO NOT hallucinate" \
+            "- ONLY document visible changes" \
+            "- If unclear → say 'Insufficient data'" \
+            "- DO NOT show commit-wise info" \
             "" \
             "OUTPUT FORMAT:" \
-            "Features Implemented" \
-            "Bug Fixes" \
-            "Affected Modules / Layers" \
-            "Technical Changes (Detailed)" \
-            "Impact"
+            "## 🚀 Features Implemented" \
+            "## 🐛 Bug Fixes" \
+            "## 📂 Affected Modules / Layers" \
+            "## 🔧 Technical Changes (Detailed)" \
+            "## ⚡ Impact"
           )
 
           INPUT=$(printf "%s\n\nContext:\n%s\n\nCode Diff:\n%s" "$PROMPT" "$COMMITS" "$DIFF")
@@ -84,37 +102,54 @@ jobs:
             --arg input "$INPUT" \
             '{ model: $model, input: $input }')
 
-          echo "Calling Groq API..."
+          echo "🚀 Calling Groq API..."
 
           RESPONSE=$(curl -s https://api.groq.com/openai/v1/responses \
             -H "Authorization: Bearer $GROQ_API_KEY" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD")
 
+          echo "📦 Raw API Response:"
           echo "$RESPONSE"
 
+          echo "🧠 Extracting AI output..."
+
           DOC=$(echo "$RESPONSE" | jq -r '
-            if .output_text then .output_text
-            elif .output and .output[0].content and .output[0].content[0].text then .output[0].content[0].text
-            else empty end
+            if .error then
+              "ERROR: " + (.error.message // "Unknown error")
+            elif .choices and .choices[0].message.content then
+              .choices[0].message.content
+            elif .output_text then
+              .output_text
+            elif (.output | length) > 0 then
+              .output[0].content[0].text // empty
+            else
+              empty
+            end
           ')
 
           if [ -z "$DOC" ] || [ "$DOC" = "null" ]; then
-            DOC="AI Output Failed"
+            echo "⚠️ AI output extraction failed"
+            DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
           fi
+
+          echo "📄 Writing documentation..."
 
           mkdir -p docs
           FILE=docs/auto-generated.md
 
-          DATE=$(date "+%Y-%m-%d %H:%M:%S")
+          CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
           echo "" >> $FILE
-          echo "## Feature Release - $DATE" >> $FILE
+          echo "## 📅 Feature Release - $CURRENT_TIME" >> $FILE
           echo "" >> $FILE
           echo "$DOC" >> $FILE
           echo "" >> $FILE
           echo "---" >> $FILE
 
+      # ----------------------------------------
+      # Commit & Push
+      # ----------------------------------------
       - name: Commit documentation
         run: |
           git config user.name "github-actions"
@@ -123,9 +158,9 @@ jobs:
           git add docs/auto-generated.md
 
           if git diff --cached --quiet; then
-            echo "No changes"
+            echo "No changes to commit"
             exit 0
           fi
 
-          git commit -m "chore: auto generate documentation"
+          git commit -m "chore: auto generate feature-wise documentation (.NET AI)"
           git push
