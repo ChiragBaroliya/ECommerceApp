@@ -156,7 +156,7 @@ jobs:
           echo "---" >> $FILE
 
       # ----------------------------------------
-      # Commit & Push (FIXED)
+      # Commit & Push (FIXED WITH FORCE)
       # ----------------------------------------
       - name: Commit documentation
         run: |
@@ -172,7 +172,6 @@ jobs:
 
           git commit -m "chore: auto generate feature-wise documentation (.NET AI)"
 
-          # 🔥 HANDLE DETACHED HEAD
           BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
           if [ "$BRANCH_NAME" = "HEAD" ]; then
@@ -182,4 +181,5 @@ jobs:
 
           echo "🚀 Pushing to branch: $BRANCH_NAME"
 
-          git push origin HEAD:$BRANCH_NAME
+          # 🔥 FIX: Handle non-fast-forward
+          git push origin HEAD:$BRANCH_NAME --force
