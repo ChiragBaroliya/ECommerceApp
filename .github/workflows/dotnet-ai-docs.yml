@@ -142,25 +142,37 @@ jobs:
           echo "📄 Preparing documentation file..."
 
           mkdir -p docs
-
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
-          # 🔥 Detect branch name
-          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-          if [ "$BRANCH_NAME" = "HEAD" ]; then
-            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          # 🔥 Detect SOURCE branch (IMPORTANT FIX)
+          echo "🔍 Detecting source branch..."
+
+          BRANCH_NAME="${GITHUB_HEAD_REF}"
+
+          if [ -z "$BRANCH_NAME" ]; then
+            MERGE_MSG=$(git log -1 --pretty=%B)
+            echo "Merge Message: $MERGE_MSG"
+
+            BRANCH_NAME=$(echo "$MERGE_MSG" | grep -oP "from \K[^ ]+" | head -1)
           fi
 
-          echo "📌 Branch Name: $BRANCH_NAME"
+          # Fallback
+          if [ -z "$BRANCH_NAME" ]; then
+            BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
-          # 🔥 Convert branch name to file name
+            if [ "$BRANCH_NAME" = "HEAD" ]; then
+              BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            fi
+          fi
+
+          echo "📌 Final Branch Name: $BRANCH_NAME"
+
+          # 🔥 Create file name from branch
           SAFE_NAME=$(echo "$BRANCH_NAME" | sed 's/\//-/g')
-
           FILE_PATH="docs/${SAFE_NAME}.md"
 
           echo "📄 Creating file: $FILE_PATH"
 
-          # 🔥 Write file
           echo "## 📅 Feature Release ($BRANCH_NAME) - $CURRENT_TIME" > $FILE_PATH
           echo "" >> $FILE_PATH
           echo "$DOC" >> $FILE_PATH
@@ -186,6 +198,7 @@ jobs:
           BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
           if [ "$BRANCH_NAME" = "HEAD" ]; then
+            echo "⚠️ Detached HEAD detected, using workflow branch"
             BRANCH_NAME=${GITHUB_REF#refs/heads/}
           fi
 
