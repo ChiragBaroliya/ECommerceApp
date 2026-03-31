@@ -5,10 +5,39 @@
 }
 <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
 <h1>Products</h1>
-@if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
-{
-    <a asp-page="Create" class="btn btn-primary mb-2">Create New Product</a>
-}
+<form method="get" class="row g-2 mb-3 align-items-end">
+    <div class="col-md-3">
+        <label for="search" class="form-label">Search</label>
+        <input type="text" id="search" name="search" value="@Model.Search" class="form-control" placeholder="Product name or description" />
+    </div>
+    <div class="col-md-3">
+        <label for="category" class="form-label">Category</label>
+        <select id="category" name="category" class="form-select">
+            <option value="">All</option>
+            @foreach (var cat in EcommerceApp.Backend.Mock.MockCategoryStore.Categories)
+            {
+                <option value="@cat.Id" @(Model.CategoryId == cat.Id ? "selected" : "")>@cat.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label for="sort" class="form-label">Sort By</label>
+        <select id="sort" name="sort" class="form-select">
+            <option value="">Default</option>
+            <option value="name_asc" @(Model.Sort == "name_asc" ? "selected" : "")>Name (A-Z)</option>
+            <option value="name_desc" @(Model.Sort == "name_desc" ? "selected" : "")>Name (Z-A)</option>
+            <option value="price_asc" @(Model.Sort == "price_asc" ? "selected" : "")>Price (Low-High)</option>
+            <option value="price_desc" @(Model.Sort == "price_desc" ? "selected" : "")>Price (High-Low)</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-primary">Apply</button>
+        @if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
+        {
+            <a asp-page="Create" class="btn btn-success ms-2">Create New Product</a>
+        }
+    </div>
+</form>
 <div class="table-responsive shadow-sm rounded">
     <table class="table table-striped table-hover table-bordered align-middle mb-0">
         <thead class="table-light">
