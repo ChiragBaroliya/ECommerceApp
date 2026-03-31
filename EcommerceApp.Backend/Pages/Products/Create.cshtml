@@ -4,7 +4,7 @@
     ViewData["Title"] = "Create Product";
 }
 <h1>Create Product</h1>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <div class="form-group">
@@ -26,6 +26,10 @@
         <label asp-for="Product.Stock"></label>
         <input asp-for="Product.Stock" class="form-control" />
         <span asp-validation-for="Product.Stock" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label for="ProductImage">Product Image</label>
+        <input type="file" name="ProductImage" class="form-control" accept="image/*" />
     </div>
     <button type="submit" class="btn btn-success">Create</button>
     <a asp-page="Index" class="btn btn-secondary">Cancel</a>

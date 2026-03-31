@@ -4,7 +4,7 @@
     ViewData["Title"] = "Edit Product";
 }
 <h1>Edit Product</h1>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     @Html.AntiForgeryToken()
     <div asp-validation-summary="ModelOnly" class="text-danger"></div>
     <input type="hidden" asp-for="Product.Id" />
@@ -27,6 +27,16 @@
         <label asp-for="Product.Stock"></label>
         <input asp-for="Product.Stock" class="form-control" />
         <span asp-validation-for="Product.Stock" class="text-danger"></span>
+    </div>
+    <div class="form-group">
+        <label for="ProductImage">Product Image</label>
+        <input type="file" name="ProductImage" class="form-control" accept="image/*" />
+        @if (!string.IsNullOrEmpty(Model.Product.ImagePath))
+        {
+            <div class="mt-2">
+                <img src="~/@Model.Product.ImagePath" alt="Product Image" style="max-width:120px;max-height:120px;" />
+            </div>
+        }
     </div>
     <button type="submit" class="btn btn-success">Save</button>
     <a asp-page="Index" class="btn btn-secondary">Cancel</a>

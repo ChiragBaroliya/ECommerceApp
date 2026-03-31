@@ -20,5 +20,8 @@ namespace EcommerceApp.Backend.Models
         [Required]
         [Range(0, 100000)]
         public int Stock { get; set; }
+
+        [StringLength(255)]
+        public string? ImagePath { get; set; }
     }
 }
