@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 env:
-  COMMIT_ID: ${{ vars.COMMIT_ID }}   # or secrets.COMMIT_ID
+  COMMIT_ID: ${{ vars.COMMIT_ID }}
 
 jobs:
   build-and-docs:
@@ -62,10 +62,8 @@ jobs:
 
             CURRENT_COMMIT=$INPUT_COMMIT
             PREVIOUS_COMMIT=$(git rev-parse $INPUT_COMMIT^)
-
           else
             echo "📌 Using latest commit from branch"
-
             CURRENT_COMMIT=$(git rev-parse HEAD)
             PREVIOUS_COMMIT=$(git rev-parse HEAD^)
           fi
@@ -141,29 +139,53 @@ jobs:
             DOC="## ⚠️ AI Output Failed\nNo meaningful documentation generated."
           fi
 
-          echo "📄 Writing documentation..."
+          echo "📄 Preparing documentation file..."
 
           mkdir -p docs
-          FILE=docs/auto-generated.md
 
           CURRENT_TIME=$(date "+%Y-%m-%d %H:%M:%S")
 
-          echo "" >> $FILE
-          echo "## 📅 Feature Release - $CURRENT_TIME" >> $FILE
-          echo "" >> $FILE
-          echo "$DOC" >> $FILE
-          echo "" >> $FILE
-          echo "---" >> $FILE
+          # 🔥 Detect branch name
+          BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
+          if [ "$BRANCH_NAME" = "HEAD" ]; then
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          fi
+
+          echo "📌 Branch Name: $BRANCH_NAME"
+
+          # 🔥 Detect branch type
+          BRANCH_TYPE=$(echo "$BRANCH_NAME" | cut -d '/' -f1)
+
+          if [[ "$BRANCH_TYPE" != "feature" && "$BRANCH_TYPE" != "bugfix" && "$BRANCH_TYPE" != "hotfix" ]]; then
+            BRANCH_TYPE="other"
+          fi
+
+          echo "📌 Branch Type: $BRANCH_TYPE"
+
+          # 🔥 Generate file number
+          COUNT=$(ls docs/${BRANCH_TYPE}-*.md 2>/dev/null | wc -l)
+          NEXT_NUM=$((COUNT + 1))
+
+          FILE_NAME=$(printf "%s-%03d.md" "$BRANCH_TYPE" "$NEXT_NUM")
+          FILE_PATH="docs/$FILE_NAME"
+
+          echo "📄 Creating file: $FILE_PATH"
+
+          # 🔥 Write file
+          echo "## 📅 ${BRANCH_TYPE^} Release ($BRANCH_NAME) - $CURRENT_TIME" > $FILE_PATH
+          echo "" >> $FILE_PATH
+          echo "$DOC" >> $FILE_PATH
+          echo "" >> $FILE_PATH
 
       # ----------------------------------------
-      # Commit & Push (FIXED WITH FORCE)
+      # Commit & Push
       # ----------------------------------------
       - name: Commit documentation
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
 
-          git add docs/auto-generated.md
+          git add docs/
 
           if git diff --cached --quiet; then
             echo "No changes to commit"
@@ -181,5 +203,4 @@ jobs:
 
           echo "🚀 Pushing to branch: $BRANCH_NAME"
 
-          # 🔥 FIX: Handle non-fast-forward
           git push origin HEAD:$BRANCH_NAME --force
