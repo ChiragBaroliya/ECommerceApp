@@ -23,9 +23,6 @@ namespace EcommerceApp.Backend.Pages.Products
         [BindProperty]
         public IFormFile? ProductImage { get; set; }
 
-        [ValidateAntiForgeryToken]
-        public IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> CategoryOptions { get; set; }
-
         public IActionResult OnPost()
         {
             if (!ModelState.IsValid)
