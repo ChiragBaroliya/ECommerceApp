@@ -24,6 +24,7 @@ namespace EcommerceApp.Backend.Mock
                 existing.Description = product.Description;
                 existing.Price = product.Price;
                 existing.Stock = product.Stock;
+                existing.CategoryId = product.CategoryId;
                 if (!string.IsNullOrEmpty(product.ImagePath))
                 {
                     existing.ImagePath = product.ImagePath;

@@ -23,5 +23,8 @@ namespace EcommerceApp.Backend.Models
 
         [StringLength(255)]
         public string? ImagePath { get; set; }
+
+        [Required]
+        public int CategoryId { get; set; }
     }
 }

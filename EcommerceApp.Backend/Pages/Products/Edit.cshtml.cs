@@ -12,11 +12,15 @@ namespace EcommerceApp.Backend.Pages.Products
         [BindProperty]
         public Product Product { get; set; } = new Product();
 
+        public IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> CategoryOptions { get; set; }
+
         public IActionResult OnGet(int id)
         {
             var product = MockProductStore.GetById(id);
             if (product == null) return RedirectToPage("Index");
             Product = product;
+            CategoryOptions = EcommerceApp.Backend.Mock.MockCategoryStore.Categories
+                .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = c.Id.ToString(), Text = c.Name });
             return Page();
         }
 
@@ -24,7 +28,12 @@ namespace EcommerceApp.Backend.Pages.Products
         public IFormFile? ProductImage { get; set; }
 
         [ValidateAntiForgeryToken]
+        public IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> CategoryOptions { get; set; }
+
         public IActionResult OnPost()
+        {
+            CategoryOptions = EcommerceApp.Backend.Mock.MockCategoryStore.Categories
+                .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = c.Id.ToString(), Text = c.Name });
         {
             if (!ModelState.IsValid)
                 return Page();
