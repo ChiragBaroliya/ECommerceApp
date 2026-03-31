@@ -27,14 +27,14 @@ namespace EcommerceApp.Backend.Pages.Products
         [BindProperty]
         public IFormFile? ProductImage { get; set; }
 
+
         [ValidateAntiForgeryToken]
-        public IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> CategoryOptions { get; set; }
 
         public IActionResult OnPost()
         {
             CategoryOptions = EcommerceApp.Backend.Mock.MockCategoryStore.Categories
                 .Select(c => new Microsoft.AspNetCore.Mvc.Rendering.SelectListItem { Value = c.Id.ToString(), Text = c.Name });
-        {
+
             if (!ModelState.IsValid)
                 return Page();
 
