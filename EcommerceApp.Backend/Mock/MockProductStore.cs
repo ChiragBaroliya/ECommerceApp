@@ -24,6 +24,10 @@ namespace EcommerceApp.Backend.Mock
                 existing.Description = product.Description;
                 existing.Price = product.Price;
                 existing.Stock = product.Stock;
+                if (!string.IsNullOrEmpty(product.ImagePath))
+                {
+                    existing.ImagePath = product.ImagePath;
+                }
             }
         }
         public static void Delete(int id)
