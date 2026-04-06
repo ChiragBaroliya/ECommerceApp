@@ -1,6 +1,7 @@
 using EcommerceApp.Backend.Models;
 using EcommerceApp.Backend.Mock;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace EcommerceApp.Backend.Controllers
 {
