@@ -6,7 +6,12 @@ namespace EcommerceApp.Backend.Mock
 {
     public static class MockProductStore
     {
-        public static List<Product> Products = new List<Product>();
+        public static List<Product> Products = new List<Product>
+        {
+            new Product { Id = 1, Name = "Laptop", Description = "High-performance laptop", Price = 1200.00m, Stock = 10, CategoryId = 1 },
+            new Product { Id = 2, Name = "Smartphone", Description = "Latest smartphone", Price = 800.00m, Stock = 20, CategoryId = 1 },
+            new Product { Id = 3, Name = "Headphones", Description = "Noise-canceling headphones", Price = 150.00m, Stock = 50, CategoryId = 2 }
+        };
         public static int NextId => Products.Count == 0 ? 1 : Products.Max(p => p.Id) + 1;
 
         public static Product? GetById(int id) => Products.FirstOrDefault(p => p.Id == id);

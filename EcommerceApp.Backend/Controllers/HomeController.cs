@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using EcommerceApp.Backend.Models;
+using EcommerceApp.Backend.Mock;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EcommerceApp.Backend.Controllers
@@ -15,7 +15,8 @@ namespace EcommerceApp.Backend.Controllers
 
         public IActionResult Index()
         {
-            return View();
+            var products = MockProductStore.Products;
+            return View(products);
         }
 
         public IActionResult Privacy()

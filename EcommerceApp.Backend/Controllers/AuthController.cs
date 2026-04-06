@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using EcommerceApp.Backend.Models;
+using EcommerceApp.Backend.Mock;
+using EcommerceApp.Backend.Auth;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
-using EcommerceApp.Backend.Models;
-using EcommerceApp.Backend.Mock;
 
 namespace EcommerceApp.Backend.Controllers
 {
@@ -76,6 +77,12 @@ namespace EcommerceApp.Backend.Controllers
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login");
+        }
+        [HttpPost, HttpGet]
+        public IActionResult Logout()
+        {
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
             return RedirectToAction("Login");
         }
     }
