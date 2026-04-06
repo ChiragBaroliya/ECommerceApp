@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -7,6 +7,20 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EcommerceApp.Backend.styles.css" asp-append-version="true" />
+    <style>
+        .navbar-brand { font-weight: 700; color: #0d6efd !important; }
+        .nav-user-pill {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: #eef2ff; border-radius: 20px;
+            padding: 0.2rem 0.75rem; font-size: 0.875rem;
+            font-weight: 600; color: #4338ca;
+        }
+        .nav-user-pill .role-badge {
+            background: #4338ca; color: #fff;
+            font-size: 0.7rem; padding: 1px 7px;
+            border-radius: 10px; font-weight: 500;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -31,44 +45,54 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Addresses/Index">Addresses</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Account/Settings">Account Settings</a>
-                        </li>
-                        @if (User.IsInRole("Admin"))
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="UserManagement" asp-action="Index">User Management</a>
+                                <a class="nav-link text-dark" asp-area="" asp-page="/Account/Settings">Account Settings</a>
                             </li>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="UserManagement" asp-action="Index">User Management</a>
+                                </li>
+                            }
                         }
                     </ul>
-                    <ul class="navbar-nav">
+                    <ul class="navbar-nav align-items-center gap-2">
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
                             var fullName = User.Claims.FirstOrDefault(c => c.Type == "FullName")?.Value;
                             var role = User.Claims.FirstOrDefault(c => c.Type == "role" || c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
-                        <li class="nav-item">
-                            <span class="navbar-text text-primary">
-                                <strong>@fullName</strong> (@role)
-                            </span>
-                        </li>
-                        @* Role-based navigation example *@
-                        @if (role == "Admin")
-                        {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-area="" asp-controller="UserManagement" asp-action="Index">User Management</a></li>
-                        }
-                        @if (role == "Vendor")
-                        {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">My Products</a></li>
-                        }
+                            <li class="nav-item">
+                                <span class="nav-user-pill">
+                                    👤 @fullName
+                                    @if (!string.IsNullOrEmpty(role))
+                                    {
+                                        <span class="role-badge">@role</span>
+                                    }
+                                </span>
+                            </li>
+                            @if (role == "Vendor")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">My Products</a>
+                                </li>
+                            }
+                            <li class="nav-item">
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-outline-danger btn-sm px-3">Logout</button>
+                                </form>
+                            </li>
                         }
                         else
                         {
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Auth" asp-action="Login">Login</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Auth" asp-action="Register">Register</a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Auth" asp-action="Login">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-primary btn-sm px-3" asp-area="" asp-controller="Auth" asp-action="Register">Register</a>
+                            </li>
                         }
                     </ul>
                 </div>
