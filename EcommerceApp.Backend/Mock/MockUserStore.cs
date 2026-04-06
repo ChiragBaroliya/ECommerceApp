@@ -12,7 +12,7 @@ namespace EcommerceApp.Backend.Mock
         {
             new User { Username = "admin", Password = hasher.HashPassword("admin", "admin"), Role = "Admin" },
             new User { Username = "customer", Password = hasher.HashPassword("customer", "customer"), Role = "Customer" },
-            new User { Username = "vendor", Password = hasher.HashPassword("vendor", "vend123456"), Role = "Vendor" }
+            new User { Username = "vendor", Password = hasher.HashPassword("vendor", "vend"), Role = "Vendor" }
         };
 
         public static User? GetUser(string username, string password)
