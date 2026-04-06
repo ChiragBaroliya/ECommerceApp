@@ -10,7 +10,7 @@ namespace EcommerceApp.Backend.Mock
         private static readonly Microsoft.AspNetCore.Identity.PasswordHasher<string> hasher = new();
         public static List<User> Users = new List<User>
         {
-            new User { Username = "admin", Password = hasher.HashPassword("admin", "admin123456"), Role = "Admin" },
+            new User { Username = "admin", Password = hasher.HashPassword("admin", "admin"), Role = "Admin" },
             new User { Username = "customer", Password = hasher.HashPassword("customer", "cust123456"), Role = "Customer" },
             new User { Username = "vendor", Password = hasher.HashPassword("vendor", "vend123456"), Role = "Vendor" }
         };
