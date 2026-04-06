@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc;
 using EcommerceApp.Backend.Models;
 using EcommerceApp.Backend.Mock;
 using EcommerceApp.Backend.Auth;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using System.Security.Claims;
 
 namespace EcommerceApp.Backend.Controllers
 {
@@ -25,7 +27,27 @@ namespace EcommerceApp.Backend.Controllers
                 ViewBag.Message = "Invalid credentials.";
                 return View();
             }
-            // Optionally, set authentication cookie or session here
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.Email, user.Email)
+            };
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(20)
+            };
+
+            HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties).Wait();
+
             return RedirectToAction("Index", "Home");
         }
 
@@ -47,6 +69,12 @@ namespace EcommerceApp.Backend.Controllers
             }
             MockUserStore.AddUser(user);
             // Optionally, show success message or redirect to login
+            return RedirectToAction("Login");
+        }
+        [HttpPost, HttpGet]
+        public IActionResult Logout()
+        {
+            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
             return RedirectToAction("Login");
         }
     }

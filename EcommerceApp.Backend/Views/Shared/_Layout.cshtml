@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -32,7 +32,7 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/Addresses/Index">Addresses</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Account/Settings">Account Settings</a>
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">Cart</a>
                         </li>
                         @if (User.IsInRole("Admin"))
                         {
@@ -44,22 +44,16 @@
                     <ul class="navbar-nav">
                         @if (User.Identity != null && User.Identity.IsAuthenticated)
                         {
-                            var fullName = User.Claims.FirstOrDefault(c => c.Type == "FullName")?.Value;
-                            var role = User.Claims.FirstOrDefault(c => c.Type == "role" || c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
+                            var username = User.Identity.Name;
+                            var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
                         <li class="nav-item">
-                            <span class="navbar-text text-primary">
-                                <strong>@fullName</strong> (@role)
+                            <span class="navbar-text text-primary me-3">
+                                <strong>@username</strong> (@role)
                             </span>
                         </li>
-                        @* Role-based navigation example *@
-                        @if (role == "Admin")
-                        {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-area="" asp-controller="UserManagement" asp-action="Index">User Management</a></li>
-                        }
-                        @if (role == "Vendor")
-                        {
-                            <li class="nav-item"><a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">My Products</a></li>
-                        }
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Logout">Logout</a>
+                        </li>
                         }
                         else
                         {
