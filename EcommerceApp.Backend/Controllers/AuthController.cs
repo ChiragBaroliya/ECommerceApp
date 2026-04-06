@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using EcommerceApp.Backend.Models;
 using EcommerceApp.Backend.Mock;
 using EcommerceApp.Backend.Auth;
-using Microsoft.AspNetCore.Authentication;
 
 namespace EcommerceApp.Backend.Controllers
 {
@@ -26,17 +25,7 @@ namespace EcommerceApp.Backend.Controllers
                 ViewBag.Message = "Invalid credentials.";
                 return View();
             }
-
-            // Sign in with cookie authentication
-            var claims = new List<System.Security.Claims.Claim>
-            {
-                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, user.Username),
-                new System.Security.Claims.Claim("FullName", user.FullName ?? user.Username),
-                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, user.Role ?? "")
-            };
-            var identity = new System.Security.Claims.ClaimsIdentity(claims, "Cookies");
-            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
-            HttpContext.SignInAsync("Cookies", principal).Wait();
+            // Optionally, set authentication cookie or session here
             return RedirectToAction("Index", "Home");
         }
 
