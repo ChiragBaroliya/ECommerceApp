@@ -79,11 +79,6 @@ namespace EcommerceApp.Backend.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
         }
-        [HttpPost, HttpGet]
-        public IActionResult Logout()
-        {
-            HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme).Wait();
-            return RedirectToAction("Login");
-        }
+        
     }
 }
