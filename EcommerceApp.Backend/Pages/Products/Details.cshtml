@@ -25,10 +25,86 @@
     <dd class="col-sm-10">@Model.Product.Price.ToString("C")</dd>
     <dt class="col-sm-2">Stock</dt>
     <dd class="col-sm-10">@Model.Product.Stock</dd>
+    <dt class="col-sm-2">Rating</dt>
+    <dd class="col-sm-10">
+        <span class="text-warning">
+            @for (int i = 1; i <= 5; i++)
+            {
+                <i class="bi @(i <= Math.Round(Model.Product.AverageRating) ? "bi-star-fill" : "bi-star")"></i>
+                @(i <= Math.Round(Model.Product.AverageRating) ? "★" : "☆")
+            }
+        </span>
+        (@Model.Product.AverageRating / 5 from @Model.Product.Reviews.Count reviews)
+    </dd>
 </dl>
-<a asp-page="Index" class="btn btn-secondary">Back to List</a>
-@if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
-{
-    <a asp-page="Edit" asp-route-id="@Model.Product.Id" class="btn btn-primary">Edit</a>
-    <a asp-page="Delete" asp-route-id="@Model.Product.Id" class="btn btn-danger">Delete</a>
-}
+
+<hr />
+
+<h3>Reviews</h3>
+<div class="row">
+    <div class="col-md-6">
+        @if (!Model.Product.Reviews.Any())
+        {
+            <p class="text-muted">No reviews yet. Be the first to review!</p>
+        }
+        else
+        {
+            @foreach (var review in Model.Product.Reviews.OrderByDescending(r => r.CreatedAt))
+            {
+                <div class="card mb-2 shadow-sm">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="card-title mb-1">@review.UserName</h6>
+                            <small class="text-muted">@review.CreatedAt.ToShortDateString()</small>
+                        </div>
+                        <div class="text-warning mb-1">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                @(i <= review.Rating ? "★" : "☆")
+                            }
+                        </div>
+                        <p class="card-text small mb-0">@review.Comment</p>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Write a Review</h5>
+                <form method="post" asp-page-handler="AddReview" asp-route-id="@Model.Product.Id">
+                    <div asp-validation-summary="All" class="text-danger small"></div>
+                    <div class="mb-2">
+                        <label class="form-label small">Your Name</label>
+                        <input asp-for="NewReviewUserName" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Rating</label>
+                        <select asp-for="NewReviewRating" class="form-select form-select-sm" required>
+                            <option value="5">5 - Excellent</option>
+                            <option value="4">4 - Very Good</option>
+                            <option value="3">3 - Good</option>
+                            <option value="2">2 - Fair</option>
+                            <option value="1">1 - Poor</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">Comment</label>
+                        <textarea asp-for="NewReviewComment" class="form-control form-control-sm" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">Submit Review</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-page="Index" class="btn btn-secondary">Back to List</a>
+    @if (User.IsInRole("Admin") || User.IsInRole("Vendor"))
+    {
+        <a asp-page="Edit" asp-route-id="@Model.Product.Id" class="btn btn-primary">Edit</a>
+        <a asp-page="Delete" asp-route-id="@Model.Product.Id" class="btn btn-danger">Delete</a>
+    }
+</div>

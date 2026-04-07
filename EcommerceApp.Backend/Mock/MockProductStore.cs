@@ -19,8 +19,8 @@ namespace EcommerceApp.Backend.Mock
             // Seed dummy products
             Products.AddRange(new[]
             {
-                new Product { Id = 1, Name = "Smartphone", Description = "Latest Android smartphone", Price = 699.99m, Stock = 50, CategoryId = 1, ImagePath = "images/products/smartphone.jpg" },
-                new Product { Id = 2, Name = "Laptop", Description = "High performance laptop", Price = 1299.99m, Stock = 20, CategoryId = 1, ImagePath = "images/products/laptop.jpg" },
+                new Product { Id = 1, Name = "Smartphone", Description = "Latest Android smartphone", Price = 699.99m, Stock = 50, CategoryId = 1, ImagePath = "images/products/smartphone.jpg", Reviews = new List<ProductReview> { new ProductReview { Id = 1, UserName = "Alice", Rating = 5, Comment = "Amazing phone!", CreatedAt = DateTime.Now.AddDays(-10) }, new ProductReview { Id = 2, UserName = "Bob", Rating = 4, Comment = "Good value.", CreatedAt = DateTime.Now.AddDays(-5) } } },
+                new Product { Id = 2, Name = "Laptop", Description = "High performance laptop", Price = 1299.99m, Stock = 20, CategoryId = 1, ImagePath = "images/products/laptop.jpg", Reviews = new List<ProductReview> { new ProductReview { Id = 3, UserName = "Charlie", Rating = 5, Comment = "Blazing fast!", CreatedAt = DateTime.Now.AddDays(-2) } } },
                 new Product { Id = 3, Name = "Novel Book", Description = "Bestselling fiction novel", Price = 19.99m, Stock = 100, CategoryId = 2, ImagePath = "images/products/book.jpg" },
                 new Product { Id = 4, Name = "T-Shirt", Description = "100% cotton t-shirt", Price = 9.99m, Stock = 200, CategoryId = 3, ImagePath = "images/products/tshirt.jpg" },
                 new Product { Id = 5, Name = "Blender", Description = "Kitchen blender with 2L jar", Price = 49.99m, Stock = 30, CategoryId = 4, ImagePath = "images/products/blender.jpg" }
