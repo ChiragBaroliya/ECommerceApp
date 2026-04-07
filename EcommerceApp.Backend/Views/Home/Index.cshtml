@@ -1,8 +1,45 @@
-﻿@{
+@model IEnumerable<EcommerceApp.Backend.Models.Product>
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container">
+    <div class="text-center mb-5">
+        <h1 class="display-4">Welcome to Our Store</h1>
+        <p class="lead">Check out our latest products.</p>
+    </div>
+
+    <div class="row">
+        @foreach (var product in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">@product.Name</h5>
+                        <p class="card-text text-muted">@product.Description</p>
+                        <p class="card-text"><strong>Price:</strong> @product.Price.ToString("C")</p>
+                        <p class="card-text small text-secondary">In Stock: @product.Stock</p>
+                    </div>
+                    <div class="card-footer bg-white border-0">
+                        <form asp-controller="Cart" asp-action="Add" method="post">
+                            <input type="hidden" name="productId" value="@product.Id" />
+                            <div class="input-group">
+                                <input type="number" name="quantity" value="1" min="1" class="form-control" />
+                                <button type="submit" class="btn btn-primary">Add to Cart</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+</style>

@@ -9,6 +9,18 @@ namespace EcommerceApp.Backend.Mock
         public static List<Category> Categories = new List<Category>();
         public static int NextId => Categories.Count == 0 ? 1 : Categories.Max(c => c.Id) + 1;
 
+        static MockCategoryStore()
+        {
+            // Seed dummy categories
+            Categories.AddRange(new[]
+            {
+                new Category { Id = 1, Name = "Electronics", Description = "Electronic gadgets and devices" },
+                new Category { Id = 2, Name = "Books", Description = "Books and Magazines" },
+                new Category { Id = 3, Name = "Clothing", Description = "Men's and Women's Clothing" },
+                new Category { Id = 4, Name = "Home & Kitchen", Description = "Home appliances and kitchenware" }
+            });
+        }
+
         public static Category? GetById(int id) => Categories.FirstOrDefault(c => c.Id == id);
         public static void Add(Category category)
         {
