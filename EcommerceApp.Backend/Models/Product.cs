@@ -27,8 +27,6 @@ namespace EcommerceApp.Backend.Models
         [Required]
         public int CategoryId { get; set; }
 
-        public List<ProductReview> Reviews { get; set; } = new();
-
-        public double AverageRating => Reviews.Any() ? Math.Round(Reviews.Average(r => r.Rating), 1) : 0;
+        public List<string> GalleryImages { get; set; } = new();
     }
 }
