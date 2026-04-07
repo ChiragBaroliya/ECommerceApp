@@ -5,6 +5,9 @@ public class Address
 {
     public int Id { get; set; }
 
+    // Link to Product
+    public int ProductId { get; set; }
+
     [Required]
     [StringLength(32)]
     public string UserName { get; set; } = string.Empty;

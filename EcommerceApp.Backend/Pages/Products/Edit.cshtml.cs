@@ -25,7 +25,7 @@ namespace EcommerceApp.Backend.Pages.Products
         }
 
         [BindProperty]
-        public IFormFile? ProductImage { get; set; }
+        public List<IFormFile> ProductImages { get; set; } = new();
 
 
         [ValidateAntiForgeryToken]
@@ -38,27 +38,72 @@ namespace EcommerceApp.Backend.Pages.Products
             if (!ModelState.IsValid)
                 return Page();
 
-            // Handle image upload
-            if (ProductImage != null && ProductImage.Length > 0)
+            // Handle image uploads
+            var existingProduct = MockProductStore.GetById(Product.Id);
+            if (existingProduct != null)
             {
-                var ext = System.IO.Path.GetExtension(ProductImage.FileName).ToLowerInvariant();
-                var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif" };
-                if (!allowed.Contains(ext) || ProductImage.Length > 2 * 1024 * 1024) // 2MB limit
+                Product.GalleryImages = existingProduct.GalleryImages;
+                Product.ImagePath = existingProduct.ImagePath;
+            }
+
+            if (ProductImages != null && ProductImages.Any())
+            {
+                foreach (var image in ProductImages)
                 {
-                    ModelState.AddModelError("ProductImage", "Invalid image file (jpg, png, gif, max 2MB)");
-                    return Page();
+                    if (image.Length > 0)
+                    {
+                        var ext = System.IO.Path.GetExtension(image.FileName).ToLowerInvariant();
+                        var allowed = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                        if (!allowed.Contains(ext) || image.Length > 2 * 1024 * 1024) // 2MB limit
+                        {
+                            ModelState.AddModelError("ProductImages", $"Invalid image file {image.FileName} (jpg, png, gif, max 2MB)");
+                            continue;
+                        }
+                        var fileName = $"product_{Guid.NewGuid()}{ext}";
+                        var savePath = System.IO.Path.Combine("wwwroot/images/products", fileName);
+                        
+                        var dir = System.IO.Path.GetDirectoryName(savePath);
+                        if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir);
+
+                        using (var stream = System.IO.File.Create(savePath))
+                        {
+                            image.CopyTo(stream);
+                        }
+
+                        var relativePath = $"images/products/{fileName}";
+                        if (string.IsNullOrEmpty(Product.ImagePath))
+                        {
+                            Product.ImagePath = relativePath;
+                        }
+                        else
+                        {
+                            Product.GalleryImages.Add(relativePath);
+                        }
+                    }
                 }
-                var fileName = $"product_{Guid.NewGuid()}{ext}";
-                var savePath = System.IO.Path.Combine("wwwroot/images/products", fileName);
-                using (var stream = System.IO.File.Create(savePath))
-                {
-                    ProductImage.CopyTo(stream);
-                }
-                Product.ImagePath = $"images/products/{fileName}";
             }
 
             MockProductStore.Update(Product);
             return RedirectToPage("Index");
+        }
+
+        public IActionResult OnPostDeleteImage(int id, string imageUrl)
+        {
+            var product = MockProductStore.GetById(id);
+            if (product != null)
+            {
+                if (product.ImagePath == imageUrl)
+                {
+                    product.ImagePath = product.GalleryImages.FirstOrDefault() ?? "";
+                    if (product.GalleryImages.Any()) product.GalleryImages.RemoveAt(0);
+                }
+                else
+                {
+                    product.GalleryImages.Remove(imageUrl);
+                }
+                MockProductStore.Update(product);
+            }
+            return RedirectToPage(new { id = id });
         }
     }
 }
