@@ -28,5 +28,10 @@ namespace EcommerceApp.Backend.Models
         public int CategoryId { get; set; }
 
         public List<string> GalleryImages { get; set; } = new();
+
+        // Add reviews and average rating
+        public List<ProductReview> Reviews { get; set; } = new();
+
+        public double AverageRating => Reviews.Count == 0 ? 0 : Reviews.Average(r => r.Rating);
     }
 }
