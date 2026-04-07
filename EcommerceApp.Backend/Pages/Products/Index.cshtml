@@ -56,9 +56,12 @@
             {
                 <tr>
                     <td>
-                        @if (!string.IsNullOrEmpty(product.ImagePath))
+                        @{
+                            var primaryImage = !string.IsNullOrEmpty(product.ImagePath) ? product.ImagePath : product.GalleryImages.FirstOrDefault();
+                        }
+                        @if (!string.IsNullOrEmpty(primaryImage))
                         {
-                            <img src="~/@product.ImagePath" alt="Product Image" style="max-width:60px;max-height:60px;" />
+                            <img src="~/@primaryImage" alt="Product Image" style="max-width:60px;max-height:60px; object-fit: cover;" />
                         }
                     </td>
                     <td>@Html.Encode(product.Name)</td>

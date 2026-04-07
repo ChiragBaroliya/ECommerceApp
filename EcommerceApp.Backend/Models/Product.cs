@@ -26,5 +26,7 @@ namespace EcommerceApp.Backend.Models
 
         [Required]
         public int CategoryId { get; set; }
+
+        public List<string> GalleryImages { get; set; } = new();
     }
 }
